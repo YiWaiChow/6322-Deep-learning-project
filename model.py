@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 def Patch_Encoding_layer():
     pass
 
@@ -36,3 +38,10 @@ def Encoder_layer():
 
 def PvT():
     pass
+
+class PVT(nn.Module):
+    def __init__(self):
+        pass
+
+    def forward(self, x):
+        return x
