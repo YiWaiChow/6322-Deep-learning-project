@@ -3,13 +3,13 @@ from torchvision import transforms
 import torch.nn as nn
 
 class Patch_Embedding(nn.Module):
-    def __init__(self, channel, embed_dim, height, width, patch_size):
+    def __init__(self, channel, embed_dim, height, width):
         super().__init__()
-        self.in_dim = channel
-        self.out_dim = embed_dim
+        self.in_dim = channel       #input dimension/channel
+        self.out_dim = embed_dim    #output dimension/embedding, we can try C1=32, C2=64, C3=128, C4=256
         self.H = height
         self.W = width
-        self.P = patch_size
+        self.P = 4
 
         # if we are using convolution to replace patching, we may not need position embedding
         self.linear = nn.Conv2d(self.in_dim, self.out_dim, kernel_size=self.P, stride=self.P, bias=True)
