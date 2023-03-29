@@ -20,9 +20,14 @@ class Patch_Embedding(nn.Module):
         x = self.norm(x)
         return x
 
-class Attention(nn.Module):
+class SRA(nn.Module):
     def __init__(self):
         super().__init__()
+        self.num_heads = 2
+        self.q = nn.Linear()
+        self.k = nn.Linear()
+        self.v = nn.Linear()
+        #TBC
 
     def forward(self, x):
         return x
@@ -34,10 +39,16 @@ class Feed_Forward(nn.Module):
     def forward(self, x):
         return x
 
-class SRA(nn.Module):
+class Transformer_Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-
+        #layer norm
+        #SRA
+        #result + residual
+        #layer norm
+        #feed forward
+        #result + residual
+        #reshape
 
     def forward(self, x):
         return x   
@@ -45,6 +56,8 @@ class SRA(nn.Module):
 class Stage_Module(nn.Module):
     def __init__(self):
         super().__init__()
+        #patch embedding
+        #transformer encoder
 
     def forward(self, x):
         return x
@@ -52,6 +65,10 @@ class Stage_Module(nn.Module):
 class PVT(nn.Module):
     def __init__(self):
         super().__init__()
+        #stage module 1
+        #stage module 2
+        #stage module 3
+        #stage module 4
 
     def forward(self, x):
         return x
