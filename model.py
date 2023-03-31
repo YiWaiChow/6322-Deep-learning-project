@@ -28,10 +28,12 @@ class SRAttention(nn.module):
         self.num_heads = num_heads
         self.head_dimension = channels/self.num_heads
         # i am not sure how to change the size here
-        self.L = nn.Linear(channels*self.head_dimension,
-                           channels*self.head_dimension)
+        self.dim = channels*self.head_dimension
+        self.L = nn.Linear(self.dim,
+                           self.dim)
         self.c = channels
-        self.sr = SR(height, width, channels, reduction_ratio)
+        self.sr = SR(height, width, channels,
+                     reduction_ratio, self.dim)
 
     def forward(self, query, key, value):
         SRA = None
@@ -52,7 +54,7 @@ class SRAttention(nn.module):
 # Spatial Reduction
 # SR(x) = Norm(Reshape(x,Ri)W^s)
 class SR(nn.Module):
-    def __init__(self, height, width, channels, reduction_ratio):
+    def __init__(self, height, width, channels, reduction_ratio, dimension):
         super().__init__()
         self.H = height
         self.W = width
@@ -60,6 +62,7 @@ class SR(nn.Module):
         self.R = reduction_ratio
         self.reduction_size = self.H*self.W/(self.R**2) * (self.R**2*self.C)
         self.linear_projection = nn.Linear(self.reduction_size, self.C)
+        self.norm = nn.LayerNorm(dimension)
 
     def forward(self, x):
         # reduced the sptial scale of x
@@ -68,7 +71,7 @@ class SR(nn.Module):
         reduced_x = torch.reshape(
             x, self.H*self.W/(self.R**2) * (self.R**2*self.C))
         new_x = self.linear_projection(reduced_x)
-        new_x = torch.norm(new_x)
+        new_x = self.norm(new_x)
         return new_x
 
 
