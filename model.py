@@ -68,6 +68,7 @@ class SR(nn.Module):
         reduced_x = torch.reshape(
             x, self.H*self.W/(self.R**2) * (self.R**2*self.C))
         new_x = self.linear_projection(reduced_x)
+        new_x = torch.norm(new_x)
         return new_x
 
 
