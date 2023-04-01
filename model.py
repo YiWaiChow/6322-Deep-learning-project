@@ -12,12 +12,17 @@ class Patch_Embedding(nn.Module):
         self.P = 4
 
         # if we are using convolution to replace patching, we may not need position embedding
+        # this outputs a shape of Batch size, embedding dimension, H, W
         self.linear = nn.Conv2d(
             channel, embed_dim, kernel_size=self.P, stride=self.P, bias=True)
-        self.norm = nn.LayerNorm([height/self.P, width/self.P, embed_dim])
+        # self.norm = nn.LayerNorm([height/self.P, width/self.P, embed_dim])
+        self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
-        x = self.linear(x)
+        # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
+        # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
+        # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
+        x = self.linear(x).flatten(2).transpose(1, 2)
         x = self.norm(x)
         return x
 
@@ -122,19 +127,25 @@ class Transformer_Encoder(nn.Module):
 
 
 class Stage_Module(nn.Module):
-    def __init__(self):
+    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio):
         super().__init__()
         # patch embedding
+        self.PE = Patch_Embedding(channels, embedding_dim, Height, Width)
+        self.TE = Transformer_Encoder(Height, Width, channels, reduction_ratio)
         # transformer encoder
 
     def forward(self, x):
+        x = self.PE(x)
+        x = torch.reshape(x, [Height, Width, ])
         return x
 
 
 class PVT(nn.Module):
     def __init__(self):
         super().__init__()
+        # input at stage 1 is H X W X 3
         # stage module 1
+
         # stage module 2
         # stage module 3
         # stage module 4
