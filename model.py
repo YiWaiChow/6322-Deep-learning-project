@@ -28,12 +28,13 @@ class SRAttention(nn.module):
         self.num_heads = num_heads
         self.head_dimension = channels/self.num_heads
         # i am not sure how to change the size here
-        self.dim = channels*self.head_dimension
-        self.L = nn.Linear(self.dim,
-                           self.dim)
+        # self.dim = channels*self.head_dimension
+        self.L = nn.Linear(self.c,
+                           self.head_dimension)
         self.c = channels
         self.sr = SR(height, width, channels,
-                     reduction_ratio, self.dim)
+                     reduction_ratio, self.c)
+        self.L2 = nn.Linear(self.c*self.head_dimension, self.c)
 
     def forward(self, query, key, value):
         SRA = None
@@ -48,6 +49,8 @@ class SRAttention(nn.module):
             else:
                 SRA = torch.cat(SRA, Ai)
 
+        SRA = self.L2(SRA)
+
         return SRA
 
 
@@ -60,16 +63,16 @@ class SR(nn.Module):
         self.W = width
         self.C = channels
         self.R = reduction_ratio
-        self.reduction_size = self.H*self.W/(self.R**2) * (self.R**2*self.C)
-        self.linear_projection = nn.Linear(self.reduction_size, self.C)
+        # self.reduction_size = self.H*self.W/(self.R**2) * (self.R**2*self.C)
+        self.linear_projection = nn.Linear(self.R**2*self.C, self.R**2*self.C)
         self.norm = nn.LayerNorm(dimension)
 
     def forward(self, x):
         # reduced the sptial scale of x
-        # by reshaping the sequence into size HW/R^2 * R^2C at stage i
+        # by reshaping the sequence into size HW/R^2 X R^2C at stage i
 
         reduced_x = torch.reshape(
-            x, self.H*self.W/(self.R**2) * (self.R**2*self.C))
+            x, [self.H*self.W/(self.R**2), (self.R**2*self.C)])
         new_x = self.linear_projection(reduced_x)
         new_x = self.norm(new_x)
         return new_x
@@ -140,43 +143,37 @@ class PVT(nn.Module):
         return x
 
 
-# I think we should be declaring the modules as class instead of function, kept the following as backup
+if __name__ == "__main__":
 
-# def Patch_Encoding_layer():
-#     pass
+    # I think we should be declaring the modules as class instead of function, kept the following as backup
 
+    # def Patch_Encoding_layer():
+    #     pass
 
-# def Normalization_layer():
-#     pass
+    # def Normalization_layer():
+    #     pass
 
+    # def Encoder_layer():
+    #     pass
 
-# def Encoder_layer():
-#     pass
+    # # modified MHA attention
 
-# # modified MHA attention
+    # def SRA_layer():
+    #     pass
 
+    # def Feed_forward_layer():
+    #     pass
 
-# def SRA_layer():
-#     pass
+    # def Spacial_Reduction_layer():
+    #     pass
 
+    # # multi head attention
 
-# def Feed_forward_layer():
-#     pass
+    # def MHA_layer():
+    #     pass
 
+    # def Encoder_layer():
+    #     pass
 
-# def Spacial_Reduction_layer():
-#     pass
-
-# # multi head attention
-
-
-# def MHA_layer():
-#     pass
-
-
-# def Encoder_layer():
-#     pass
-
-
-# # def PvT():
-#     pass
+    # # def PvT():
+    #     pass
