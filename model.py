@@ -9,6 +9,8 @@ class Patch_Embedding(nn.Module):
         self.in_dim = channel       # input dimension/channel
         # output dimension/embedding, we can try C1=32, C2=64, C3=128, C4=256
         self.out_dim = embed_dim
+
+        # is this 4 or 16?
         self.P = 4
 
         # if we are using convolution to replace patching, we may not need position embedding
@@ -19,11 +21,15 @@ class Patch_Embedding(nn.Module):
         self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
+
+        print(x.shape, "size of x before patch embedding, B, C, H, W")
         # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
         # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
         # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
         x = self.linear(x).flatten(2).transpose(1, 2)
         x = self.norm(x)
+        # output shape should be [B, Number of patches, ED], where number of patches should be HW/4*2
+        print(x.shape, "size of x after patch embedding, B, Patches, ED")
         return x
 
 
