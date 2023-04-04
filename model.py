@@ -27,6 +27,9 @@ class Patch_Embedding(nn.Module):
         # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
         # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
         # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
+        
+        # # # should we flatten before or after layer norm?
+
         x = self.linear(x).flatten(2).transpose(1, 2)
         x = self.norm(x)
         # output shape should be [B, Number of patches, ED], where number of patches should be HW/4*2
@@ -115,26 +118,29 @@ class Feed_Forward(nn.Module):
 
 
 class Transformer_Encoder(nn.Module):
-    def __init__(self, height, width, channels, reduction_ratio):
+    def __init__(self, height, width, channels, reduction_ratio, patch_dim):
         super().__init__()
         self.num_heads = 2
-        self.norm1 = nn.LayerNorm([height, width, channels])
-        self.q = nn.Linear(channels, channels)
-        self.k = nn.Linear(channels, channels)
-        self.v = nn.Linear(channels, channels)
+        # self.norm1 = nn.LayerNorm([height, width, channels])
+        self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
+        #self.q = nn.Linear(channels, channels)
+        #self.k = nn.Linear(channels, channels)
+        #self.v = nn.Linear(channels, channels)
         self.a = SRAttention(self.num_heads, channels,
                              height, width, reduction_ratio)
-        self.norm2 = nn.LayerNorm([height, width, channels])
+        self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.ff = Feed_Forward()  # missing i, h, o
 
     def forward(self, x):
         n1 = self.norm1(x)
         # q = n1?
-        q = self.q(n1)
-        k = self.k(n1)
-        v = self.v(n1)
+        #q = self.q(n1)
+        #k = self.k(n1)
+        #v = self.v(n1)
         # idk if qkv are already linear transform or not, in the paper it looks like its hasn't do the transform yet
+
         # # # I think you are right, linear transform of qkv should be within the SRAttention module
+
         a = self.a(self.num_heads, q, k, v)
         x += a
         n2 = self.norm2(x)
@@ -145,65 +151,46 @@ class Transformer_Encoder(nn.Module):
 
 
 class Stage_Module(nn.Module):
-    # added patch_dim
+    # # # added parameter patch_dim
     def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim):
         super().__init__()
-        # # # patch embedding
+        self.H = Height
+        self.W = Width
+        self.out_dim = embedding_dim
+        self.P = patch_dim
         self.PE = Patch_Embedding(channels, embedding_dim, Height, Width, patch_dim)
-        self.TE = Transformer_Encoder(Height, Width, channels, reduction_ratio)
-        # transformer encoder
+        self.TE = Transformer_Encoder(Height, Width, channels, reduction_ratio, patch_dim)
 
     def forward(self, x):
         x = self.PE(x)
-        x = torch.reshape(x, [Height, Width, ])
+        x = self.TE(x)
+        # # # reshape to H(i-1)/P x W(i-1)/P x ED as output
+        x = torch.reshape(x, [self.H/self.P, self.W/self.P, self.out_dim])
         return x
 
 
 class PVT(nn.Module):
-    def __init__(self):
+    def __init__(self, channels, height, width):
         super().__init__()
         # input at stage 1 is H X W X 3
-        # stage module 1
 
-        # stage module 2
-        # stage module 3
-        # stage module 4
+        # # # I guess we can try reduction_ratio = 2 first
+        self.r = 2
+
+        # # # will look to clean it up later
+        # # # do we even need height and width as params?
+        self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4)
+        self.stg2 = Stage_Module(32, 64, height/4, width/4, self.r, 8)
+        self.stg3 = Stage_Module(64, 128, height/8, width/8, self.r, 16)
+        self.stg4 = Stage_Module(128, 256, height/16, width/16, self.r, 32)
 
     def forward(self, x):
+        x = self.stg1(x)
+        x = self.stg2(x)
+        x = self.stg3(x)
+        x = self.stg4(x)
         return x
 
 
 if __name__ == "__main__":
-
-    # I think we should be declaring the modules as class instead of function, kept the following as backup
-
-    # def Patch_Encoding_layer():
-    #     pass
-
-    # def Normalization_layer():
-    #     pass
-
-    # def Encoder_layer():
-    #     pass
-
-    # # modified MHA attention
-
-    # def SRA_layer():
-    #     pass
-
-    # def Feed_forward_layer():
-    #     pass
-
-    # def Spacial_Reduction_layer():
-    #     pass
-
-    # # multi head attention
-
-    # def MHA_layer():
-    #     pass
-
-    # def Encoder_layer():
-    #     pass
-
-    # # def PvT():
-    #     pass
+    pass
