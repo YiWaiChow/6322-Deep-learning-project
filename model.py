@@ -4,14 +4,15 @@ import torch.nn as nn
 
 
 class Patch_Embedding(nn.Module):
-    def __init__(self, channel, embed_dim, height, width):
+    def __init__(self, channel, embed_dim, height, width, patch_dim):
         super().__init__()
         self.in_dim = channel       # input dimension/channel
         # output dimension/embedding, we can try C1=32, C2=64, C3=128, C4=256
         self.out_dim = embed_dim
 
         # is this 4 or 16?
-        self.P = 4
+        # # # Not sure if we can do it dynamically, I guess we can just do patch_size = 4 8 16 32
+        self.P = patch_dim
 
         # if we are using convolution to replace patching, we may not need position embedding
         # this outputs a shape of Batch size, embedding dimension, H, W
@@ -133,6 +134,7 @@ class Transformer_Encoder(nn.Module):
         k = self.k(n1)
         v = self.v(n1)
         # idk if qkv are already linear transform or not, in the paper it looks like its hasn't do the transform yet
+        # # # I think you are right, linear transform of qkv should be within the SRAttention module
         a = self.a(self.num_heads, q, k, v)
         x += a
         n2 = self.norm2(x)
@@ -143,10 +145,11 @@ class Transformer_Encoder(nn.Module):
 
 
 class Stage_Module(nn.Module):
-    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio):
+    # added patch_dim
+    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim):
         super().__init__()
-        # patch embedding
-        self.PE = Patch_Embedding(channels, embedding_dim, Height, Width)
+        # # # patch embedding
+        self.PE = Patch_Embedding(channels, embedding_dim, Height, Width, patch_dim)
         self.TE = Transformer_Encoder(Height, Width, channels, reduction_ratio)
         # transformer encoder
 
