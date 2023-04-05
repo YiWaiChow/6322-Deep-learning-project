@@ -42,7 +42,7 @@ class SRAttention(nn.Module):
     def __init__(self, num_heads, channels, height, width, reduction_ratio, batch_size):
         super().__init__()
         self.num_heads = num_heads
-        self.head_dimension = channels/self.num_heads
+        self.head_dimension = channels//self.num_heads
         # i am not sure how to change the size here
         # self.dim = channels*self.head_dimension
 
@@ -131,7 +131,7 @@ class Transformer_Encoder(nn.Module):
                              height, width, reduction_ratio, batch_size)
         #self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm2 = nn.LayerNorm(channels)
-        self.ff = Feed_Forward(channels, channels/2, channels)
+        self.ff = Feed_Forward(channels, channels//2, channels)
 
     def forward(self, x):
         n1 = self.norm1(x)
@@ -164,7 +164,7 @@ class Stage_Module(nn.Module):
         x = self.PE(x)
         x = self.TE(x)
         # # # reshape to H(i-1)/P x W(i-1)/P x ED as output
-        x = torch.reshape(x, [self.B, self.H/self.P, self.W/self.P, self.out_dim])
+        x = torch.reshape(x, [self.B, self.H//self.P, self.W//self.P, self.out_dim])
         return x
 
 
@@ -178,9 +178,9 @@ class PVT(nn.Module):
 
         # # # will look to clean it up later
         self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4, batch_size)
-        self.stg2 = Stage_Module(32, 64, height/4, width/4, self.r, 8, batch_size)
-        self.stg3 = Stage_Module(64, 128, height/8, width/8, self.r, 16, batch_size)
-        self.stg4 = Stage_Module(128, 256, height/16, width/16, self.r, 32, batch_size)
+        self.stg2 = Stage_Module(32, 64, height//4, width//4, self.r, 8, batch_size)
+        self.stg3 = Stage_Module(64, 128, height//8, width//8, self.r, 16, batch_size)
+        self.stg4 = Stage_Module(128, 256, height//16, width//16, self.r, 32, batch_size)
 
     def forward(self, x):
         x = self.stg1(x)
