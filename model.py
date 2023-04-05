@@ -177,6 +177,7 @@ class PVT(nn.Module):
         self.r = 2
 
         # # # will look to clean it up later
+        # # # maybe we should only pass the original height and width for all stages, will verify it tmr
         self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4, batch_size)
         self.stg2 = Stage_Module(32, 64, height//4, width//4, self.r, 8, batch_size)
         self.stg3 = Stage_Module(64, 128, height//8, width//8, self.r, 16, batch_size)
