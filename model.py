@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class Patch_Embedding(nn.Module):
-    def __init__(self, channel, embed_dim, height, width, patch_dim):
+    def __init__(self, channel, embed_dim, patch_dim):
         super().__init__()
         self.in_dim = channel       # input dimension/channel
         # output dimension/embedding, we can try C1=32, C2=64, C3=128, C4=256
@@ -157,7 +157,7 @@ class Stage_Module(nn.Module):
         self.out_dim = embedding_dim
         self.P = patch_dim
         self.B = batch_size
-        self.PE = Patch_Embedding(channels, embedding_dim, Height, Width, patch_dim)
+        self.PE = Patch_Embedding(channels, embedding_dim, patch_dim)
         self.TE = Transformer_Encoder(Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size)
 
     def forward(self, x):
