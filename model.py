@@ -102,7 +102,7 @@ class SR(nn.Module):
         new_x = self.linear_projection(reduced_x)
         new_x = self.norm(new_x)
         # output should be of size HW/R^2 x CI
-        print(new_x.shape, "size of x after SR, should be HW/R^2 x CI, CI \n")
+        print(new_x.shape, "size of x after SR, should be HW/R^2, CI \n")
         return new_x
 
 
@@ -123,12 +123,12 @@ class Feed_Forward(nn.Module):
 class Transformer_Encoder(nn.Module):
     def __init__(self, height, width, channels, reduction_ratio, patch_dim, batch_size):
         super().__init__()
-        self.num_heads = 2
+        self.num_heads = 1
         # self.norm1 = nn.LayerNorm([height, width, channels])
         #self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm1 = nn.LayerNorm(channels)
         self.a = SRAttention(self.num_heads, channels,
-                             height, width, reduction_ratio, batch_size)
+                             height//patch_dim, width//patch_dim, reduction_ratio, batch_size)
         #self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm2 = nn.LayerNorm(channels)
         self.ff = Feed_Forward(channels, channels//2, channels)
@@ -139,7 +139,7 @@ class Transformer_Encoder(nn.Module):
 
         # # # I think you are right, linear transform of qkv should be within the SRAttention module
 
-        a = self.a(self.num_heads, n1, n1, n1)
+        a = self.a(n1, n1, n1)
         x += a
         n2 = self.norm2(x)
         ff = self.ff(n2)
