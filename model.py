@@ -67,7 +67,7 @@ class SRAttention(nn.Module):
             srv = self.L(self.sr(value))
             # attention at stage i
             # HW X d_head @ d_head X HW/R^2 @ HW/R^2 x d_head = > HW X d_head <--- the shape of the A_i
-            Ai = (torch.softmax(qi@srk.T/(self.head_dimension**0.5)))@srv
+            Ai = (torch.softmax(qi@srk.transpose(1, 2)/(self.head_dimension**0.5), dim=1))@srv
             if(SRA is None):
                 SRA = Ai
             else:
@@ -98,7 +98,7 @@ class SR(nn.Module):
         # by reshaping the sequence into size HW/R^2 X R^2C at stage i
 
         reduced_x = torch.reshape(
-            x, [self.B, self.H*self.W/(self.R**2), (self.R**2*self.C)])
+            x, [self.B, self.H*self.W//(self.R**2), (self.R**2*self.C)])
         new_x = self.linear_projection(reduced_x)
         new_x = self.norm(new_x)
         # output should be of size HW/R^2 x CI
