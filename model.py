@@ -38,19 +38,21 @@ class Patch_Embedding(nn.Module):
 
 
 # Spatial-Reduction Attention
-class SRAttention(nn.module):
-    def __init__(self, num_heads, channels, height, width, reduction_ratio):
+class SRAttention(nn.Module):
+    def __init__(self, num_heads, channels, height, width, reduction_ratio, batch_size):
+        super().__init__()
         self.num_heads = num_heads
         self.head_dimension = channels/self.num_heads
         # i am not sure how to change the size here
         # self.dim = channels*self.head_dimension
 
+        self.c = channels
+
         # the Weight is Ci X d Head, so the input dimension should be c and the output should be d head
         self.L = nn.Linear(self.c,
                            self.head_dimension)
-        self.c = channels
         self.sr = SR(height, width, channels,
-                     reduction_ratio, self.c)
+                     reduction_ratio, self.c, batch_size)
         #  Wo has size Ci X Ci, this is becasuse d head = Ci/Ni, after concatnating N Ci, the dimension becomes Ci.
         self.L2 = nn.Linear(self.c, self.c)
 
@@ -79,11 +81,12 @@ class SRAttention(nn.module):
 # Spatial Reduction
 # SR(x) = Norm(Reshape(x,Ri)W^s)
 class SR(nn.Module):
-    def __init__(self, height, width, channels, reduction_ratio):
+    def __init__(self, height, width, channels, reduction_ratio, batch_size):
         super().__init__()
         self.H = height
         self.W = width
         self.C = channels
+        self.B = batch_size
         self.R = reduction_ratio
         # after reshaping x into HW/R^2 X R^2C, it takes in R^2C and projects to Ci
         self.linear_projection = nn.Linear(self.R**2*self.C, self.C)
@@ -95,7 +98,7 @@ class SR(nn.Module):
         # by reshaping the sequence into size HW/R^2 X R^2C at stage i
 
         reduced_x = torch.reshape(
-            x, [self.H*self.W/(self.R**2), (self.R**2*self.C)])
+            x, [self.B, self.H*self.W/(self.R**2), (self.R**2*self.C)])
         new_x = self.linear_projection(reduced_x)
         new_x = self.norm(new_x)
         # output should be of size HW/R^2 x CI
@@ -118,30 +121,25 @@ class Feed_Forward(nn.Module):
 
 
 class Transformer_Encoder(nn.Module):
-    def __init__(self, height, width, channels, reduction_ratio, patch_dim):
+    def __init__(self, height, width, channels, reduction_ratio, patch_dim, batch_size):
         super().__init__()
         self.num_heads = 2
         # self.norm1 = nn.LayerNorm([height, width, channels])
-        self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
-        #self.q = nn.Linear(channels, channels)
-        #self.k = nn.Linear(channels, channels)
-        #self.v = nn.Linear(channels, channels)
+        #self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
+        self.norm1 = nn.LayerNorm(channels)
         self.a = SRAttention(self.num_heads, channels,
-                             height, width, reduction_ratio)
-        self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
-        self.ff = Feed_Forward()  # missing i, h, o
+                             height, width, reduction_ratio, batch_size)
+        #self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
+        self.norm2 = nn.LayerNorm(channels)
+        self.ff = Feed_Forward(channels, channels/2, channels)
 
     def forward(self, x):
         n1 = self.norm1(x)
-        # q = n1?
-        #q = self.q(n1)
-        #k = self.k(n1)
-        #v = self.v(n1)
         # idk if qkv are already linear transform or not, in the paper it looks like its hasn't do the transform yet
 
         # # # I think you are right, linear transform of qkv should be within the SRAttention module
 
-        a = self.a(self.num_heads, q, k, v)
+        a = self.a(self.num_heads, n1, n1, n1)
         x += a
         n2 = self.norm2(x)
         ff = self.ff(n2)
@@ -152,25 +150,26 @@ class Transformer_Encoder(nn.Module):
 
 class Stage_Module(nn.Module):
     # # # added parameter patch_dim
-    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim):
+    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim, batch_size):
         super().__init__()
         self.H = Height
         self.W = Width
         self.out_dim = embedding_dim
         self.P = patch_dim
+        self.B = batch_size
         self.PE = Patch_Embedding(channels, embedding_dim, Height, Width, patch_dim)
-        self.TE = Transformer_Encoder(Height, Width, channels, reduction_ratio, patch_dim)
+        self.TE = Transformer_Encoder(Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size)
 
     def forward(self, x):
         x = self.PE(x)
         x = self.TE(x)
         # # # reshape to H(i-1)/P x W(i-1)/P x ED as output
-        x = torch.reshape(x, [self.H/self.P, self.W/self.P, self.out_dim])
+        x = torch.reshape(x, [self.B, self.H/self.P, self.W/self.P, self.out_dim])
         return x
 
 
 class PVT(nn.Module):
-    def __init__(self, channels, height, width):
+    def __init__(self, channels, height, width, batch_size):
         super().__init__()
         # input at stage 1 is H X W X 3
 
@@ -178,11 +177,10 @@ class PVT(nn.Module):
         self.r = 2
 
         # # # will look to clean it up later
-        # # # do we even need height and width as params?
-        self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4)
-        self.stg2 = Stage_Module(32, 64, height/4, width/4, self.r, 8)
-        self.stg3 = Stage_Module(64, 128, height/8, width/8, self.r, 16)
-        self.stg4 = Stage_Module(128, 256, height/16, width/16, self.r, 32)
+        self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4, batch_size)
+        self.stg2 = Stage_Module(32, 64, height/4, width/4, self.r, 8, batch_size)
+        self.stg3 = Stage_Module(64, 128, height/8, width/8, self.r, 16, batch_size)
+        self.stg4 = Stage_Module(128, 256, height/16, width/16, self.r, 32, batch_size)
 
     def forward(self, x):
         x = self.stg1(x)
@@ -193,4 +191,7 @@ class PVT(nn.Module):
 
 
 if __name__ == "__main__":
-    pass
+    m = torch.randn(2, 3, 224, 224)
+    model = PVT(3, 224, 224, 2)
+    x = model(m)
+    print(x)
