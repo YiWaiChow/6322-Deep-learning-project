@@ -27,7 +27,7 @@ class Patch_Embedding(nn.Module):
         # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
         # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
         # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
-        
+
         # # # should we flatten before or after layer norm?
 
         x = self.linear(x).flatten(2).transpose(1, 2)
@@ -52,7 +52,7 @@ class SRAttention(nn.Module):
         self.L = nn.Linear(self.c,
                            self.head_dimension)
         self.sr = SR(height, width, channels,
-                     reduction_ratio, self.c, batch_size)
+                     reduction_ratio, batch_size)
         #  Wo has size Ci X Ci, this is becasuse d head = Ci/Ni, after concatnating N Ci, the dimension becomes Ci.
         self.L2 = nn.Linear(self.c, self.c)
 
@@ -67,7 +67,8 @@ class SRAttention(nn.Module):
             srv = self.L(self.sr(value))
             # attention at stage i
             # HW X d_head @ d_head X HW/R^2 @ HW/R^2 x d_head = > HW X d_head <--- the shape of the A_i
-            Ai = (torch.softmax(qi@srk.transpose(1, 2)/(self.head_dimension**0.5), dim=1))@srv
+            Ai = (torch.softmax(qi@srk.transpose(1, 2) /
+                                (self.head_dimension**0.5), dim=1))@srv
             if(SRA is None):
                 SRA = Ai
             else:
@@ -158,13 +159,15 @@ class Stage_Module(nn.Module):
         self.P = patch_dim
         self.B = batch_size
         self.PE = Patch_Embedding(channels, embedding_dim, patch_dim)
-        self.TE = Transformer_Encoder(Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size)
+        self.TE = Transformer_Encoder(
+            Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size)
 
     def forward(self, x):
         x = self.PE(x)
         x = self.TE(x)
         # # # reshape to H(i-1)/P x W(i-1)/P x ED as output
-        x = torch.reshape(x, [self.B, self.H//self.P, self.W//self.P, self.out_dim])
+        x = torch.reshape(x, [self.B, self.H//self.P,
+                              self.W//self.P, self.out_dim])
         return x
 
 
@@ -178,10 +181,14 @@ class PVT(nn.Module):
 
         # # # will look to clean it up later
         # # # maybe we should only pass the original height and width for all stages, will verify it tmr
-        self.stg1 = Stage_Module(channels, 32, height, width, self.r, 4, batch_size)
-        self.stg2 = Stage_Module(32, 64, height//4, width//4, self.r, 8, batch_size)
-        self.stg3 = Stage_Module(64, 128, height//8, width//8, self.r, 16, batch_size)
-        self.stg4 = Stage_Module(128, 256, height//16, width//16, self.r, 32, batch_size)
+        self.stg1 = Stage_Module(channels, 32, height,
+                                 width, self.r, 4, batch_size)
+        self.stg2 = Stage_Module(
+            32, 64, height//4, width//4, self.r, 8, batch_size)
+        self.stg3 = Stage_Module(
+            64, 128, height//8, width//8, self.r, 16, batch_size)
+        self.stg4 = Stage_Module(128, 256, height//16,
+                                 width//16, self.r, 32, batch_size)
 
     def forward(self, x):
         x = self.stg1(x)
