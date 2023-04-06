@@ -17,23 +17,24 @@ class Patch_Embedding(nn.Module):
         # if we are using convolution to replace patching, we may not need position embedding
         # this outputs a shape of Batch size, embedding dimension, H, W
         self.linear = nn.Conv2d(
-            channel, embed_dim, kernel_size=self.P, stride=self.P, bias=True)
+            channel, embed_dim, kernel_size=patch_dim, stride=patch_dim, bias=True)
         # self.norm = nn.LayerNorm([height/self.P, width/self.P, embed_dim])
         self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
 
-        print(x.shape, "size of x before patch embedding, B, C, H, W \n")
         # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
         # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
         # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
 
         # # # should we flatten before or after layer norm?
 
-        x = self.linear(x).flatten(2).transpose(1, 2)
+        x = self.linear(x)
+
+        x = x.flatten(2).transpose(1, 2)
         x = self.norm(x)
         # output shape should be [B, Number of patches, ED], where number of patches should be HW/4*2
-        print(x.shape, "size of x after patch embedding, B, Patches, ED \n")
+
         return x
 
 
@@ -72,10 +73,12 @@ class SRAttention(nn.Module):
             if(SRA is None):
                 SRA = Ai
             else:
-                SRA = torch.cat(SRA, Ai)
+
+                SRA = torch.cat((SRA, Ai), dim=2)
+
         # SRA after concatinating should be HW X D_head*Ni -> HW X Ci
         SRA = self.L2(SRA)
-        print(SRA.shape, "size of x after SRA, should be HW, Ci \n ")
+
         return SRA
 
 
@@ -103,7 +106,7 @@ class SR(nn.Module):
         new_x = self.linear_projection(reduced_x)
         new_x = self.norm(new_x)
         # output should be of size HW/R^2 x CI
-        print(new_x.shape, "size of x after SR, should be HW/R^2, CI \n")
+
         return new_x
 
 
@@ -122,9 +125,9 @@ class Feed_Forward(nn.Module):
 
 
 class Transformer_Encoder(nn.Module):
-    def __init__(self, height, width, channels, reduction_ratio, patch_dim, batch_size):
+    def __init__(self, height, width, channels, reduction_ratio, patch_dim, batch_size, num_heads):
         super().__init__()
-        self.num_heads = 1
+        self.num_heads = num_heads
         # self.norm1 = nn.LayerNorm([height, width, channels])
         #self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm1 = nn.LayerNorm(channels)
@@ -151,7 +154,7 @@ class Transformer_Encoder(nn.Module):
 
 class Stage_Module(nn.Module):
     # # # added parameter patch_dim
-    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim, batch_size):
+    def __init__(self, channels, embedding_dim, Height, Width, reduction_ratio, patch_dim, batch_size, num_heads):
         super().__init__()
         self.H = Height
         self.W = Width
@@ -160,14 +163,14 @@ class Stage_Module(nn.Module):
         self.B = batch_size
         self.PE = Patch_Embedding(channels, embedding_dim, patch_dim)
         self.TE = Transformer_Encoder(
-            Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size)
+            Height, Width, embedding_dim, reduction_ratio, patch_dim, batch_size, num_heads)
 
     def forward(self, x):
         x = self.PE(x)
         x = self.TE(x)
         # # # reshape to H(i-1)/P x W(i-1)/P x ED as output
         x = torch.reshape(x, [self.B, self.H//self.P,
-                              self.W//self.P, self.out_dim])
+                              self.W//self.P, self.out_dim]).permute([0, 3, 1, 2])
         return x
 
 
@@ -181,25 +184,71 @@ class PVT(nn.Module):
 
         # # # will look to clean it up later
         # # # maybe we should only pass the original height and width for all stages, will verify it tmr
-        self.stg1 = Stage_Module(channels, 32, height,
-                                 width, self.r, 4, batch_size)
+        self.stg1 = Stage_Module(channels, 64, height,
+                                 width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
         self.stg2 = Stage_Module(
-            32, 64, height//4, width//4, self.r, 8, batch_size)
+            64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
         self.stg3 = Stage_Module(
-            64, 128, height//8, width//8, self.r, 16, batch_size)
-        self.stg4 = Stage_Module(128, 256, height//16,
-                                 width//16, self.r, 32, batch_size)
+            128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
+        self.stg4 = Stage_Module(256, 512, height//16,
+                                 width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
+
+        self.head = nn.linear(512)
 
     def forward(self, x):
+
         x = self.stg1(x)
+
         x = self.stg2(x)
+
         x = self.stg3(x)
+
         x = self.stg4(x)
+
+        return x
+
+
+class classification_pvt(nn.Module):
+    def __init__(self, channels, height, width, batch_size, num_classes):
+        super().__init__()
+        # input at stage 1 is H X W X 3
+
+        # # # I guess we can try reduction_ratio = 2 first
+        self.r = 2
+
+        # # # will look to clean it up later
+        # # # maybe we should only pass the original height and width for all stages, will verify it tmr
+        self.stg1 = Stage_Module(channels, 64, height,
+                                 width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
+        self.stg2 = Stage_Module(
+            64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
+        self.stg3 = Stage_Module(
+            128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
+        self.stg4 = Stage_Module(256, 512, height//16,
+                                 width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
+
+        self.head = nn.Linear(7*7*512, 128)
+        self.head2 = nn.Linear(128, num_classes)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+
+        x = self.stg1(x)
+
+        x = self.stg2(x)
+
+        x = self.stg3(x)
+
+        x = self.stg4(x).permute([0, 2, 3, 1])
+
+        x = x.view(-1, 7*7*512)
+        x = self.head(x)
+        x = self.relu(x)
+        x = self.head2(x)
         return x
 
 
 if __name__ == "__main__":
     m = torch.randn(2, 3, 224, 224)
-    model = PVT(3, 224, 224, 2)
+    model = classification_pvt(3, 224, 224, 2, 10)
     x = model(m)
-    print(x)
