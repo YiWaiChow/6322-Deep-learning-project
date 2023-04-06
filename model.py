@@ -6,15 +6,11 @@ import torch.nn as nn
 class Patch_Embedding(nn.Module):
     def __init__(self, channel, embed_dim, patch_dim):
         super().__init__()
-        self.in_dim = channel       # input dimension/channel
-        # output dimension/embedding, we can try C1=32, C2=64, C3=128, C4=256
+        self.in_dim = channel
         self.out_dim = embed_dim
 
-        # is this 4 or 16?
-        # # # Not sure if we can do it dynamically, I guess we can just do patch_size = 4 8 16 32
         self.P = patch_dim
 
-        # if we are using convolution to replace patching, we may not need position embedding
         # this outputs a shape of Batch size, embedding dimension, H, W
         self.linear = nn.Conv2d(
             channel, embed_dim, kernel_size=patch_dim, stride=patch_dim, bias=True)
@@ -26,8 +22,6 @@ class Patch_Embedding(nn.Module):
         # flatten it into 2d, so H and W collapse into number of patches, then we swap the shape
         # from [B, ED, H,W] -> [B, ED, number of patches] -> [B, number of patches, ED]
         # this is done to follow the convention of the paper, where the embedding dimension is the last dimension
-
-        # # # should we flatten before or after layer norm?
 
         x = self.linear(x)
 
@@ -44,8 +38,6 @@ class SRAttention(nn.Module):
         super().__init__()
         self.num_heads = num_heads
         self.head_dimension = channels//self.num_heads
-        # i am not sure how to change the size here
-        # self.dim = channels*self.head_dimension
 
         self.c = channels
 
@@ -128,27 +120,19 @@ class Transformer_Encoder(nn.Module):
     def __init__(self, height, width, channels, reduction_ratio, patch_dim, batch_size, num_heads):
         super().__init__()
         self.num_heads = num_heads
-        # self.norm1 = nn.LayerNorm([height, width, channels])
-        #self.norm1 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm1 = nn.LayerNorm(channels)
         self.a = SRAttention(self.num_heads, channels,
                              height//patch_dim, width//patch_dim, reduction_ratio, batch_size)
-        #self.norm2 = nn.LayerNorm([(height*width)/(patch_dim**2), channels])
         self.norm2 = nn.LayerNorm(channels)
         self.ff = Feed_Forward(channels, channels//2, channels)
 
     def forward(self, x):
         n1 = self.norm1(x)
-        # idk if qkv are already linear transform or not, in the paper it looks like its hasn't do the transform yet
-
-        # # # I think you are right, linear transform of qkv should be within the SRAttention module
-
         a = self.a(n1, n1, n1)
         x += a
         n2 = self.norm2(x)
         ff = self.ff(n2)
         x += ff
-        # we may not need reshape
         return x
 
 
@@ -179,19 +163,18 @@ class PVT(nn.Module):
         super().__init__()
         # input at stage 1 is H X W X 3
 
-        # # # I guess we can try reduction_ratio = 2 first
-        self.r = 2
-
-        # # # will look to clean it up later
-        # # # maybe we should only pass the original height and width for all stages, will verify it tmr
         self.stg1 = Stage_Module(channels, 64, height,
                                  width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
+        
         self.stg2 = Stage_Module(
             64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
+        
         self.stg3 = Stage_Module(
             128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
+        
         self.stg4 = Stage_Module(256, 512, height//16,
                                  width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
+        
 
         self.head = nn.linear(512)
 
