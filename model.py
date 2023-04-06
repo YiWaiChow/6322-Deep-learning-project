@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from torchvision import transforms
 import torch.nn as nn
 
@@ -106,7 +107,7 @@ class Feed_Forward(nn.Module):
     def __init__(self, in_size, hidden_size, out_size):
         super().__init__()
         self.l1 = nn.Linear(in_size, hidden_size)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=False)
         self.l2 = nn.Linear(hidden_size, out_size)
 
     def forward(self, x):
@@ -129,10 +130,10 @@ class Transformer_Encoder(nn.Module):
     def forward(self, x):
         n1 = self.norm1(x)
         a = self.a(n1, n1, n1)
-        x += a
+        x = torch.add(x, a)
         n2 = self.norm2(x)
         ff = self.ff(n2)
-        x += ff
+        x = torch.add(x, ff)
         return x
 
 
@@ -212,7 +213,7 @@ class classification_pvt(nn.Module):
 
         self.head = nn.Linear(7*7*512, 128)
         self.head2 = nn.Linear(128, num_classes)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=False)
 
     def forward(self, x):
 
