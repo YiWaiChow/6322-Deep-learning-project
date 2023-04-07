@@ -230,9 +230,3 @@ class classification_pvt(nn.Module):
         x = self.relu(x)
         x = self.head2(x)
         return x
-
-
-if __name__ == "__main__":
-    m = torch.randn(2, 3, 224, 224)
-    model = classification_pvt(3, 224, 224, 2, 10)
-    x = model(m)
