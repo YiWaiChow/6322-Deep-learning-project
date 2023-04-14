@@ -196,6 +196,9 @@ class classification_pvt(nn.Module):
         super().__init__()
         # input at stage 1 is H X W X 3
 
+        self.output_H = height//32
+        self.output_W = width//32
+
         self.stg1 = Stage_Module(channels, 64, height,
                                  width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
         self.stg2 = Stage_Module(
@@ -205,7 +208,7 @@ class classification_pvt(nn.Module):
         self.stg4 = Stage_Module(256, 512, height//16,
                                  width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
 
-        self.head = nn.Linear(7*7*512, 128)
+        self.head = nn.Linear(self.output_H*self.output_W*512, 128)
         self.head2 = nn.Linear(128, num_classes)
         self.relu = nn.ReLU(inplace=False)
 
@@ -219,7 +222,7 @@ class classification_pvt(nn.Module):
 
         x = self.stg4(x).permute([0, 2, 3, 1])
 
-        x = x.view(-1, 7*7*512)
+        x = x.view(-1, self.output_H*self.output_W*512)
         x = self.head(x)
         x = self.relu(x)
         x = self.head2(x)
