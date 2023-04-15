@@ -30,6 +30,7 @@ from util import Saver
 from util import SegmentationLosses
 
 from segmentation import Segmentic_Pvt
+from torch.utils.tensorboard import SummaryWriter
 
 
 def adjust_learning_rate(optimizer, decay=0.1):
@@ -38,16 +39,18 @@ def adjust_learning_rate(optimizer, decay=0.1):
 
 
 class Trainer(object):
-    def __init__(self, start_epoch, end_epoch, no_validation):
+    def __init__(self, start_epoch, end_epoch, no_validation, load_check_point, check_point_path=None, lr=0.01):
 
+        self.writer = SummaryWriter('segmentation_runs')
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
+        # batch_size needs to be divisible by the len of the dataset, otherwise the model will mess up
         self.batch_size = 5
         self.lr_decay_gamma = 0.01
         self.weight_decay = 0.001
         self.no_val = no_validation
-        self.lr = 0.1
-
+        self.lr = lr
+        self.validation_itr = 0
         # Define Saver
         self.saver = Saver("./segementic_work_dir",
                            "ADE20K", "Sementic_Pvt", self.lr, start_epoch)
@@ -58,13 +61,14 @@ class Trainer(object):
         self.cuda = True
         # Define network
         blocks = [2, 4, 23, 3]
-        pvt = Segmentic_Pvt(blocks, 151, channels=3,
+        pvt = Segmentic_Pvt(blocks, 150, channels=3,
                             height=512, width=512, batch_size=self.batch_size)
-        # Define Optimizer
 
-        self.lr = self.lr * 0.1
-        optimizer = torch.optim.Adam(
+        # self.lr = self.lr * 0.1
+        optimizer = torch.optim.AdamW(
             pvt.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+
+        # Define Optimizer
 
         # Define Criterion
         weight = None
@@ -86,10 +90,20 @@ class Trainer(object):
         self.lr_stage = [68, 93]
         self.lr_staget_ind = 0
 
+        if(load_check_point):
+            checkpoint = torch.load(check_point_path)
+            print(list(checkpoint.keys()))
+            pvt.load_state_dict(checkpoint["state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer"])
+            self.saver.epochs = checkpoint["epoch"]
+            self.best_pred = checkpoint['best_pred']
+            print("loaded check point")
+
     def training(self, epoch):
         torch.backends.cudnn.enabled = False
         train_loss = 0.0
         self.model.train()
+        global_it = 0
         num_img_tr = len(self.train_loader)
         if self.lr_staget_ind > 1 and epoch % (self.lr_stage[self.lr_staget_ind]) == 0:
             adjust_learning_rate(self.optimizer, self.lr_decay_gamma)
@@ -100,6 +114,10 @@ class Trainer(object):
             image, target = batch['image'], batch['label']
             image, target = image.cuda(), target.cuda()
 
+            if(image.shape != torch.Size([5, 3, 512, 512])):
+                print(
+                    "something is wrong with this image, skip to the next batch", image.shape)
+                continue
             self.optimizer.zero_grad()
             inputs = Variable(image)
             labels = Variable(target)
@@ -108,6 +126,7 @@ class Trainer(object):
 
             loss = self.criterion(outputs, labels.long())
             print(loss)
+            self.writer.add_scalar('Loss/train', loss, global_it)
             loss_val = loss.item()
 
             loss.backward(torch.ones_like(loss))
@@ -119,7 +138,7 @@ class Trainer(object):
         print('[Epoch: %d, numImages: %5d]' %
               (epoch, iteration * self.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
-
+        global_it += 1
         if self.no_val:
             # save checkpoint every epoch
             is_best = False
@@ -134,33 +153,46 @@ class Trainer(object):
         self.model.eval()
         self.evaluator.reset()
         test_loss = 0.0
+        global_it = 0
         for iter, batch in enumerate(self.val_loader):
             image, target = batch['image'], batch['label']
             image, target = image.cuda(), target.cuda()
 
+            if(image.shape != torch.Size([5, 3, 512, 512])):
+                print(
+                    "something is wrong with this image, skip to the next batch", image.shape)
+                continue
             with torch.no_grad():
                 output = self.model(image)
             loss = self.criterion(output, target)
             test_loss += loss.item()
+            self.writer.add_scalar('Test_Loss/validation', loss, global_it)
             print('Test Loss:%.3f' % (test_loss/(iter+1)))
             pred = output.data.cpu().numpy()
             target = target.cpu().numpy()
             pred = np.argmax(pred, axis=1)
             # Add batch sample into evaluator
             self.evaluator.add_batch(target, pred)
-
+            global_it += 1
         # Fast test during the training
         Acc = self.evaluator.Pixel_Accuracy()
         Acc_class = self.evaluator.Pixel_Accuracy_Class()
         mIoU = self.evaluator.Mean_Intersection_over_Union()
         FWIoU = self.evaluator.Frequency_Weighted_Intersection_over_Union()
+
+        self.writer.add_scalar('Accuracy/validation', Acc, self.validation_itr)
+        self.writer.add_scalar('Acc_class/validation',
+                               Acc_class, self.validation_itr)
+        self.writer.add_scalar('mIoU/validation', mIoU, self.validation_itr)
+        self.writer.add_scalar('FWIoU/validation', FWIoU, self.validation_itr)
+
         print('Validation:')
         print('[Epoch: %d, numImages: %5d]' %
               (epoch, iter * self.batch_size + image.shape[0]))
         print("Acc:{:.5f}, Acc_class:{:.5f}, mIoU:{:.5f}, fwIoU:{:.5f}".format(
             Acc, Acc_class, mIoU, FWIoU))
         print('Loss: %.3f' % test_loss)
-
+        self.validation_itr += 1
         new_pred = mIoU
         if new_pred > self.best_pred:
             is_best = True
@@ -175,9 +207,10 @@ class Trainer(object):
 
 def main():
 
-    trainer = Trainer(0, 100, False)
+    trainer = Trainer(0, 10, True, load_check_point=False,
+                      check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.01)
 
-    eval_interval = 5
+    eval_interval = 2
     for epoch in range(trainer.start_epoch, trainer.end_epoch):
         trainer.training(epoch)
         if epoch % eval_interval == 0:
