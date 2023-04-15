@@ -127,8 +127,6 @@ class Segmentic_Pvt(nn.Module):
     def forward(self, x):
         # Bottom-up using backbone
         low_level_features = self.back_bone(x)
-        for x in low_level_features:
-            print(x.shape)
         c1 = low_level_features[0]
         c2 = low_level_features[1]
         c3 = low_level_features[2]
@@ -155,7 +153,7 @@ class Segmentic_Pvt(nn.Module):
 
         # Semantic
         _, _, h, w = p2.size()
-        print(h, w)
+
         # 256->256
         s5 = self._upsample(F.relu(self.gn2(self.conv2(p5))), h, w)
         # 256->256

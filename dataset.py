@@ -155,7 +155,6 @@ class Ade20KSegmentation(data.Dataset):
         lbl_path = os.path.join(
             self.annotations_base + "\\" + filename_without_ext + '.png')
 
-        print(lbl_path)
         _img = Image.open(img_path).convert('RGB')
         _tmp = np.array(Image.open(lbl_path), dtype=np.uint8)
         # _tmp = self.encode_segmap(_tmp)

@@ -161,7 +161,7 @@ class Saver(object):
         log_file = open(logfile, 'w')
         p = OrderedDict()
         p['datset'] = self.dataset
-        p['backbone'] = self.net
+        p['backbone'] = self.model
         p['lr'] = self.lr
         p['epoch'] = self.epochs
 

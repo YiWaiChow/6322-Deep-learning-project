@@ -26,7 +26,7 @@ from segmentation import Segmentic_Pvt
 
 
 from util import Evaluator
-from utils.saver import Saver
+from util import Saver
 from util import SegmentationLosses
 
 from segmentation import Segmentic_Pvt
@@ -38,15 +38,19 @@ def adjust_learning_rate(optimizer, decay=0.1):
 
 
 class Trainer(object):
-    def __init__(self, no_validation):
+    def __init__(self, start_epoch, end_epoch, no_validation):
 
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
         self.batch_size = 5
         self.lr_decay_gamma = 0.01
         self.weight_decay = 0.001
         self.no_val = no_validation
+        self.lr = 0.1
 
         # Define Saver
-        self.saver = Saver(args)
+        self.saver = Saver("./segementic_work_dir",
+                           "ADE20K", "Sementic_Pvt", self.lr, start_epoch)
         self.saver.save_experiment_config()
 
         self.train_loader, self.val_loader, self.test_loader, self.num_class = make_data_loader(self.batch_size, "..\\ADEChallengeData2016\\images",
@@ -54,14 +58,13 @@ class Trainer(object):
         self.cuda = True
         # Define network
         blocks = [2, 4, 23, 3]
-        pvt = Segmentic_Pvt(blocks, 150, channels=3,
+        pvt = Segmentic_Pvt(blocks, 151, channels=3,
                             height=512, width=512, batch_size=self.batch_size)
         # Define Optimizer
-        self.lr = 0.1
 
         self.lr = self.lr * 0.1
         optimizer = torch.optim.Adam(
-            pvt.parameters(), lr=self.lr, momentum=0, weight_decay=self.weight_decay)
+            pvt.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         # Define Criterion
         weight = None
@@ -84,6 +87,7 @@ class Trainer(object):
         self.lr_staget_ind = 0
 
     def training(self, epoch):
+        torch.backends.cudnn.enabled = False
         train_loss = 0.0
         self.model.train()
         num_img_tr = len(self.train_loader)
@@ -92,23 +96,23 @@ class Trainer(object):
             self.lr *= self.lr_decay_gamma
             self.lr_staget_ind += 1
         for iteration, batch in enumerate(self.train_loader):
-            if self.dataset == 'Cityscapes':
-                image, target = batch['image'], batch['label']
-            else:
-                raise NotImplementedError
-            if self.cuda:
-                image, target = image.cuda(), target.cuda()
+
+            image, target = batch['image'], batch['label']
+            image, target = image.cuda(), target.cuda()
+
             self.optimizer.zero_grad()
             inputs = Variable(image)
             labels = Variable(target)
 
             outputs = self.model(inputs)
+
             loss = self.criterion(outputs, labels.long())
+            print(loss)
             loss_val = loss.item()
+
             loss.backward(torch.ones_like(loss))
             self.optimizer.step()
             train_loss += loss.item()
-
             if iteration % 10 == 0:
                 print("Epoch[{}]({}/{}):Loss:{:.4f}, learning rate={}".format(epoch,
                                                                               iteration, len(self.train_loader), loss.data, self.lr))
@@ -131,12 +135,9 @@ class Trainer(object):
         self.evaluator.reset()
         test_loss = 0.0
         for iter, batch in enumerate(self.val_loader):
-            if self.args.dataset == 'Cityscapes':
-                image, target = batch['image'], batch['label']
-            else:
-                raise NotImplementedError
-            if self.args.cuda:
-                image, target = image.cuda(), target.cuda()
+            image, target = batch['image'], batch['label']
+            image, target = image.cuda(), target.cuda()
+
             with torch.no_grad():
                 output = self.model(image)
             loss = self.criterion(output, target)
@@ -155,7 +156,7 @@ class Trainer(object):
         FWIoU = self.evaluator.Frequency_Weighted_Intersection_over_Union()
         print('Validation:')
         print('[Epoch: %d, numImages: %5d]' %
-              (epoch, iter * self.args.batch_size + image.shape[0]))
+              (epoch, iter * self.batch_size + image.shape[0]))
         print("Acc:{:.5f}, Acc_class:{:.5f}, mIoU:{:.5f}, fwIoU:{:.5f}".format(
             Acc, Acc_class, mIoU, FWIoU))
         print('Loss: %.3f' % test_loss)
@@ -174,12 +175,13 @@ class Trainer(object):
 
 def main():
 
-    trainer = Trainer()
-    print('Starting Epoch:', trainer.args.start_epoch)
-    print('Total Epoches:', trainer.args.epochs)
-    for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+    trainer = Trainer(0, 100, False)
+
+    eval_interval = 5
+    for epoch in range(trainer.start_epoch, trainer.end_epoch):
         trainer.training(epoch)
-        if not trainer.args.no_val and epoch % args.eval_interval == (args.eval_interval - 1):
+        if epoch % eval_interval == 0:
+            print("validating at epoch {}".format(epoch))
             trainer.validation(epoch)
 
 

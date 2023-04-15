@@ -1,0 +1,4 @@
+datset:ADE20K
+backbone:Sementic_Pvt
+lr:0.1
+epoch:0
