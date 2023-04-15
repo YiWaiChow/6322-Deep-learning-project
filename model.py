@@ -165,16 +165,15 @@ class PVT(nn.Module):
 
         self.stg1 = Stage_Module(channels, 64, height,
                                  width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
-        
+
         self.stg2 = Stage_Module(
             64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
-        
+
         self.stg3 = Stage_Module(
             128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
-        
+
         self.stg4 = Stage_Module(256, 512, height//16,
                                  width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
-        
 
         self.head = nn.linear(512)
 
@@ -196,9 +195,6 @@ class classification_pvt(nn.Module):
         super().__init__()
         # input at stage 1 is H X W X 3
 
-        self.output_H = height//32
-        self.output_W = width//32
-
         self.stg1 = Stage_Module(channels, 64, height,
                                  width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
         self.stg2 = Stage_Module(
@@ -208,7 +204,7 @@ class classification_pvt(nn.Module):
         self.stg4 = Stage_Module(256, 512, height//16,
                                  width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
 
-        self.head = nn.Linear(self.output_H*self.output_W*512, 128)
+        self.head = nn.Linear(7*7*512, 128)
         self.head2 = nn.Linear(128, num_classes)
         self.relu = nn.ReLU(inplace=False)
 
@@ -222,8 +218,73 @@ class classification_pvt(nn.Module):
 
         x = self.stg4(x).permute([0, 2, 3, 1])
 
-        x = x.view(-1, self.output_H*self.output_W*512)
+        x = x.view(-1, 7*7*512)
         x = self.head(x)
         x = self.relu(x)
         x = self.head2(x)
         return x
+
+
+class detection_pvt(nn.Module):
+    def __init__(self, channels, height, width, batch_size, num_classes):
+        super().__init__()
+        # input at stage 1 is H X W X 3
+
+        self.stg1 = Stage_Module(channels, 64, height,
+                                 width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
+        self.stg2 = Stage_Module(
+            64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
+        self.stg3 = Stage_Module(
+            128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
+        self.stg4 = Stage_Module(256, 512, height//16,
+                                 width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
+
+        self.head = nn.Linear(20*15*512, 128)
+        self.head2 = nn.Linear(128, num_classes)
+        self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, x):
+
+        x = self.stg1(x)
+
+        x = self.stg2(x)
+
+        x = self.stg3(x)
+
+        x = self.stg4(x).permute([0, 2, 3, 1])
+
+        x = x.view(-1, 20*15*512)
+        x = self.head(x)
+        x = self.relu(x)
+        x = self.head2(x)
+        return x
+
+
+class segmentation_pvt(nn.Module):
+    def __init__(self, channels, height, width, batch_size):
+        super().__init__()
+        # input at stage 1 is H X W X 3
+
+        self.stg1 = Stage_Module(channels, 64, height,
+                                 width, reduction_ratio=8, patch_dim=4, batch_size=batch_size, num_heads=1)
+
+        self.stg2 = Stage_Module(
+            64, 128, height//4, width//4, reduction_ratio=4, patch_dim=2, batch_size=batch_size, num_heads=2)
+
+        self.stg3 = Stage_Module(
+            128, 256, height//8, width//8, reduction_ratio=2, patch_dim=2, batch_size=batch_size, num_heads=4)
+
+        self.stg4 = Stage_Module(256, 512, height//16,
+                                 width//16, reduction_ratio=1, patch_dim=2, batch_size=batch_size, num_heads=8)
+
+    def forward(self, x):
+
+        x1 = self.stg1(x)
+
+        x2 = self.stg2(x1)
+
+        x3 = self.stg3(x2)
+
+        x4 = self.stg4(x3)
+
+        return [x, x1, x2, x3, x4]
