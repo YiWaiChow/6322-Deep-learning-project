@@ -21,12 +21,13 @@ from datetime import datetime
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import Sampler
 
-from data import make_data_loader
-from mypath import Path
+from dataset import make_data_loader
+from segmentation import Segmentic_Pvt
 
-from utils.metrics import Evaluator
+
+from util import Evaluator
 from utils.saver import Saver
-from utils.loss import SegmentationLosses
+from util import SegmentationLosses
 
 from segmentation import Segmentic_Pvt
 
@@ -37,54 +38,45 @@ def adjust_learning_rate(optimizer, decay=0.1):
 
 
 class Trainer(object):
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, no_validation):
+
+        self.batch_size = 5
+        self.lr_decay_gamma = 0.01
+        self.weight_decay = 0.001
+        self.no_val = no_validation
 
         # Define Saver
         self.saver = Saver(args)
         self.saver.save_experiment_config()
 
-        # Define Dataloader
-        if args.dataset == 'Cityscapes':
-            kwargs = {'num_workers': args.num_workers, 'pin_memory': True}
-            self.train_loader, self.val_loader, self.test_loader, self.num_class = make_data_loader(
-                args, **kwargs)
-
+        self.train_loader, self.val_loader, self.test_loader, self.num_class = make_data_loader(self.batch_size, "..\\ADEChallengeData2016\\images",
+                                                                                                "..\\ADEChallengeData2016\\annotations")
+        self.cuda = True
         # Define network
-        if args.net == 'resnet101':
-            blocks = [2, 4, 23, 3]
-            fpn = FPN(blocks, self.num_class, back_bone=args.net)
-
+        blocks = [2, 4, 23, 3]
+        pvt = Segmentic_Pvt(blocks, 150, channels=3,
+                            height=512, width=512, batch_size=self.batch_size)
         # Define Optimizer
-        self.lr = self.args.lr
-        if args.optimizer == 'adam':
-            self.lr = self.lr * 0.1
-            optimizer = torch.optim.Adam(
-                fpn.parameters(), lr=args.lr, momentum=0, weight_decay=args.weight_decay)
-        elif args.optimizer == 'sgd':
-            optimizer = torch.optim.SGD(
-                fpn.parameters(), lr=args.lr, momentum=0, weight_decay=args.weight_decay)
+        self.lr = 0.1
+
+        self.lr = self.lr * 0.1
+        optimizer = torch.optim.Adam(
+            pvt.parameters(), lr=self.lr, momentum=0, weight_decay=self.weight_decay)
 
         # Define Criterion
-        if args.dataset == 'Cityscapes':
-            weight = None
-            self.criterion = SegmentationLosses(
-                weight=weight, cuda=args.cuda).build_loss(mode='ce')
+        weight = None
+        self.criterion = SegmentationLosses(
+            weight=weight, cuda=self.cuda).build_loss(mode='ce')
 
-        self.model = fpn
+        self.model = pvt
         self.optimizer = optimizer
 
         # Define Evaluator
         self.evaluator = Evaluator(self.num_class)
 
-        # multiple mGPUs
-        if args.mGPUs:
-            self.model = torch.nn.DataParallel(
-                self.model, device_ids=self.args.gpu_ids)
-
         # Using cuda
-        if args.cuda:
-            self.model = self.model.cuda()
+
+        self.model = self.model.cuda()
 
         # Resuming checkpoint
         self.best_pred = 0.0
@@ -96,15 +88,15 @@ class Trainer(object):
         self.model.train()
         num_img_tr = len(self.train_loader)
         if self.lr_staget_ind > 1 and epoch % (self.lr_stage[self.lr_staget_ind]) == 0:
-            adjust_learning_rate(self.optimizer, self.args.lr_decay_gamma)
-            self.lr *= self.args.lr_decay_gamma
+            adjust_learning_rate(self.optimizer, self.lr_decay_gamma)
+            self.lr *= self.lr_decay_gamma
             self.lr_staget_ind += 1
         for iteration, batch in enumerate(self.train_loader):
-            if self.args.dataset == 'Cityscapes':
+            if self.dataset == 'Cityscapes':
                 image, target = batch['image'], batch['label']
             else:
                 raise NotImplementedError
-            if self.args.cuda:
+            if self.cuda:
                 image, target = image.cuda(), target.cuda()
             self.optimizer.zero_grad()
             inputs = Variable(image)
@@ -121,10 +113,10 @@ class Trainer(object):
                 print("Epoch[{}]({}/{}):Loss:{:.4f}, learning rate={}".format(epoch,
                                                                               iteration, len(self.train_loader), loss.data, self.lr))
         print('[Epoch: %d, numImages: %5d]' %
-              (epoch, iteration * self.args.batch_size + image.data.shape[0]))
+              (epoch, iteration * self.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
 
-        if self.args.no_val:
+        if self.no_val:
             # save checkpoint every epoch
             is_best = False
             self.saver.save_checkpoint({
@@ -181,31 +173,8 @@ class Trainer(object):
 
 
 def main():
-    args = parse_args()
-    if args.save_dir is None:
-        args.save_dir = os.path.join(os.getcwd(), 'run')
-    if args.checkname is None:
-        args.checkname = 'fpn-' + str(args.net)
 
-    if args.cuda and args.mGPUs:
-        try:
-            args.gpu_ids = [int(s) for s in args.gpu_ids.split(',')]
-        except ValueError:
-            raise ValueError(
-                'Argument --gpu_ids must be a comma-separated list of itegers only')
-
-    if args.batch_size is None:
-        args.batch_size = 4 * len(args.gpu_ids)
-
-    if args.lr is None:
-        lrs = {
-            'cityscapes': 0.01,
-        }
-        args.lr = lrs[args.dataset.lower()] / \
-            (4 * len(args.gpu_ids)) * args.batch_size
-
-    print(args)
-    trainer = Trainer(args)
+    trainer = Trainer()
     print('Starting Epoch:', trainer.args.start_epoch)
     print('Total Epoches:', trainer.args.epochs)
     for epoch in range(trainer.args.start_epoch, trainer.args.epochs):

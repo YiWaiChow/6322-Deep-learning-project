@@ -244,7 +244,7 @@ def make_data_loader(batch_size, images_folder, annotations_folder):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader, num_class = make_data_loader(5, ".\\ADEChallengeData2016\\images",
-                                                                        ".\\ADEChallengeData2016\\annotations")
-x = next(iter(train_loader))
-print(x["image"].shape, x["label"].shape)
+    train_loader, val_loader, test_loader, num_class = make_data_loader(5, "..\\ADEChallengeData2016\\images",
+                                                                        "..\\ADEChallengeData2016\\annotations")
+    x = next(iter(train_loader))
+    print(x["image"].shape, x["label"].shape)
