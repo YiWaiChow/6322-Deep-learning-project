@@ -10,7 +10,13 @@ This repository is the implementation of [Pyramid Vision Transformer: A Versatil
 ├── README.md
 ├── classification_train.ipynb
 ├── detection_train.ipynb
-├── segmentation_train.ipynb
+├── segmentation
+│   ├──dataset.py
+│   ├──model.py
+│   ├──segmentation_model.py
+│   ├──training.py
+│   ├──test.py
+│   ├──util.py
 ├── ckpt_cifar100
 │   ├── cifar100_new_params.pth
 │   ├── cifar100_og_params.pth
@@ -26,6 +32,16 @@ To install requirements:
 ```setup
 pip install -r requirements.txt
 ```
+## Datasets
+
+### CIFAR10
+
+### COCO2017
+
+### ADE20k
+The structure of the dataset has been changed to fit into the dataloader, please download from my google drive through this link:
+
+https://drive.google.com/file/d/1kQZGjiKCMdv2SpYVDftdez0gSRPDEX4H/view?usp=sharing
 
 ## Training
 
@@ -37,11 +53,10 @@ To train the detection model, run this command:
 python train.py --input-data <path_to_data> --alpha 10 --beta 20
 ```
 
-To train the segmentation model, run this command:
+To train the segmentation model, run the segmentation/training.py
 
-```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
-```
+The dataset is assumed to be located a folder 1 layer outside the project root directory
+"..\\ADEChallengeData2016"
 
 ## Evaluation
 
@@ -53,11 +68,8 @@ To evaluate the detection model on COCO2017, run this command:
 python eval.py --input-data <path_to_data> --alpha 10 --beta 20
 ```
 
-To evaluate the segmentation model on ADE20K, run this command:
+To evaluate the segmentation model on ADE20K, call the test function in segmentation/test.py
 
-```eval
-python eval.py --input-data <path_to_data> --alpha 10 --beta 20
-```
 
 ## Pre-trained Models
 
@@ -69,8 +81,8 @@ You can download the pretrained models/weights here:
 - detection model: /path/to/file <br>
   trained on COCO2017 using parameters x,y,z.
   
-- segmentation model: /path/to/file <br>
-  trained on ADE20K using parameters x,y,z. 
+- segmentation model: https://drive.google.com/file/d/1gB889CepIlE-Q_bOvZCRqAVFV6V4SbXQ/view?usp=sharing <br>
+  trained on ADE20K using parameters AdamW with parameters lr=0.0001, weight_decay=0.001. 
 
 ## Results
 
@@ -90,6 +102,7 @@ Our model achieves the following performance on :
 
 ### Semantic Segmentation on ADE20K
 
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| PVT_segmentation   |     85%         |      95%       |
+Tested on 2000 image
+| Model name         | Accuracy  | class Accurary | mIoU | fwIoU |
+| ------------------ | --------  | -------------- | ---- | ----- |
+| PVT_segmentation   |  49.25%   |      7.1%      | 4.8% | 32.2% |
