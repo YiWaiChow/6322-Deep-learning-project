@@ -15,3 +15,5 @@ segmentation_runs/training_epoch_0/events.out.tfevents.1681596980.DESKTOP-526RQH
 epoch 2/checkpoint.pth.tar
 epoch 0/model_best.pth.tar
 segementic_work_dir/experiment_0/checkpoint.pth.tar
+epoch 3/checkpoint.pth.tar
+segementic_work_dir/model_best.pth.tar
