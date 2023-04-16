@@ -18,9 +18,6 @@ import distinctipy
 
 import torch
 
-
-from segmentation import Segmentic_Pvt
-
 import os
 import sys
 import numpy as np
@@ -41,14 +38,13 @@ import torchvision.transforms as transforms
 from torch.utils.data.sampler import Sampler
 
 from dataset import make_data_loader
-from segmentation import Segmentic_Pvt
 
 
 from util import Evaluator
 from util import Saver
 from util import SegmentationLosses
 
-from segmentation import Segmentic_Pvt
+from segmentation_model import Segmentic_Pvt
 from torch.utils.tensorboard import SummaryWriter
 
 

@@ -3,12 +3,12 @@
 '''FPN in PyTorch.
 See the paper "Feature Pyramid Networks for Object Detection" for more details.
 '''
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import sys
 import cv2
-
-from model import *
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
+from model import segmentation_pvt
 
 
 class Bottleneck(nn.Module):
