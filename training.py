@@ -41,7 +41,7 @@ def adjust_learning_rate(optimizer, decay=0.1):
 class Trainer(object):
     def __init__(self, start_epoch, end_epoch, no_validation, load_check_point, check_point_path=None, lr=0.01):
 
-        self.writer = SummaryWriter('segmentation_runs')
+        self.writer = None
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         # batch_size needs to be divisible by the len of the dataset, otherwise the model will mess up
@@ -100,6 +100,8 @@ class Trainer(object):
             print("loaded check point")
 
     def training(self, epoch):
+        self.writer = SummaryWriter(
+            'segmentation_runs/training_epoch_{}'.format(epoch))
         torch.backends.cudnn.enabled = False
         train_loss = 0.0
         self.model.train()
@@ -132,13 +134,13 @@ class Trainer(object):
             loss.backward(torch.ones_like(loss))
             self.optimizer.step()
             train_loss += loss.item()
+            global_it += 1
             if iteration % 10 == 0:
                 print("Epoch[{}]({}/{}):Loss:{:.4f}, learning rate={}".format(epoch,
                                                                               iteration, len(self.train_loader), loss.data, self.lr))
         print('[Epoch: %d, numImages: %5d]' %
               (epoch, iteration * self.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
-        global_it += 1
         if self.no_val:
             # save checkpoint every epoch
             is_best = False
@@ -150,6 +152,8 @@ class Trainer(object):
             }, is_best)
 
     def validation(self, epoch):
+        self.writer = SummaryWriter(
+            'segmentation_runs/validation_epoch_{}'.format(epoch))
         self.model.eval()
         self.evaluator.reset()
         test_loss = 0.0
@@ -208,7 +212,7 @@ class Trainer(object):
 def main():
 
     trainer = Trainer(0, 10, True, load_check_point=False,
-                      check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.01)
+                      check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.0001)
 
     eval_interval = 2
     for epoch in range(trainer.start_epoch, trainer.end_epoch):

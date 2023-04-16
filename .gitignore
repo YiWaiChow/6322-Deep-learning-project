@@ -1,3 +1,17 @@
 ./ADEChallengeData2016
 *.jpg
 *.png
+*.txt
+./segmentation_runs
+segmentation_runs/validation_epoch_2/events.out.tfevents.1681605886.DESKTOP-526RQHO.12184.4
+segmentation_runs/validation_epoch_0/events.out.tfevents.1681599679.DESKTOP-526RQHO.12184.1
+segmentation_runs/training_epoch_4/events.out.tfevents.1681613152.DESKTOP-526RQHO.12184.6
+segmentation_runs/training_epoch_3/events.out.tfevents.1681606414.DESKTOP-526RQHO.12184.5
+segmentation_runs/training_epoch_2/events.out.tfevents.1681603132.DESKTOP-526RQHO.12184.3
+segmentation_runs/training_epoch_1/events.out.tfevents.1681600188.DESKTOP-526RQHO.12184.2
+segmentation_runs/training_epoch_0/events.out.tfevents.1681615536.DESKTOP-526RQHO.27712.0
+segmentation_runs/training_epoch_0/events.out.tfevents.1681596980.DESKTOP-526RQHO.12184.0
+.gitignore
+epoch 2/checkpoint.pth.tar
+epoch 0/model_best.pth.tar
+segementic_work_dir/experiment_0/checkpoint.pth.tar
