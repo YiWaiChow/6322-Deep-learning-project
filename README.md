@@ -87,13 +87,19 @@ https://drive.google.com/file/d/1kQZGjiKCMdv2SpYVDftdez0gSRPDEX4H/view?usp=shari
 
 ## Training
 
+### Image Classification on CIFAR100
+
 To train the classification model, run [classification_train.ipynb](classification/classification_train.ipynb).
+
+### Object Detection on COCO2017
 
 To train the detection model, run this command:
 
 ```train
 python .\detection\train.py --dataset coco --coco_path <path_to_coco>
 ```
+
+### Semantic Segmentation on ADE20K
 
 To train the segmentation model, run the segmentation/training.py
 
@@ -102,13 +108,19 @@ The dataset is assumed to be located a folder 1 layer outside the project root d
 
 ## Evaluation
 
+### Image Classification on CIFAR100
+
 To evaluate the classification model on CIFAR100, run [classification_test.ipynb](classification/classification_test.ipynb).
+
+### Object Detection on COCO2017
 
 To evaluate the detection model on COCO2017, run this command:
 
 ```eval
 python .\detection\coco_validation.py --coco_path <path_to_coco> --model_path .\ckpt_coco17\coco_retinanet.pt
 ```
+
+### Semantic Segmentation on ADE20K
 
 To evaluate the segmentation model on ADE20K, call the test function in segmentation/test.py
 
