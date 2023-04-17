@@ -164,6 +164,21 @@ Our model achieves the following performance on :
 
 ### Semantic Segmentation on ADE20K
 
-Tested on 2000 image
+Tested on 2000 image:
+
 | Backbone                  | Accuracy  | class Accurary | mIoU | fwIoU |
+| ------------------        |-------    | -------------- |----- |-------| 
 | PVT_segmentation (Ours)   |  49.25%   |      7.1%      | 4.8% | 32.2% |
+
+Comparsion with performance in the paper:
+
+| Backbone                  | mIoU  |
+| ------------------        |-------| 
+| PVT_segmentation (Ours)   | 4.8%  |
+| PVT_Tiny                  | 35.7% |
+| PVT_Small                 | 39.8% |
+| PVT_Medium                | 41.6% |
+| PVT_Large                 | 42.1% |
+| PVT_Large*                | 44.8% |
+
+
