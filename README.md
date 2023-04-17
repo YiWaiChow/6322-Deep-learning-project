@@ -148,7 +148,7 @@ python .\detection\coco_validation.py --coco_path <path_to_coco> --model_path .\
 
 ### Semantic Segmentation on ADE20K
 
-To evaluate the segmentation model on ADE20K, call the test function in segmentation/test.py
+To evaluate the segmentation model on ADE20K, call the test() function in segmentation/test.py
 
 
 ## Pre-trained Models
