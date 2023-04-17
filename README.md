@@ -147,6 +147,10 @@ Our model achieves the following performance on :
 | Model name         | Top 1 Accuracy  | Top 5 Accuracy |
 | ------------------ |---------------- | -------------- |
 | PVT_classification |     85%         |      95%       |
+| PVT_classification |     85%         |      95%       |
+| PVT_classification |     85%         |      95%       |
+| PVT_classification |     85%         |      95%       |
+| PVT_classification (Ours) |     85%         |      95%       |
 
 ### Object Detection on COCO2017
 
