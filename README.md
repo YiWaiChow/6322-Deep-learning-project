@@ -53,7 +53,26 @@ This repository is the implementation of [Pyramid Vision Transformer: A Versatil
 The CIFAR100 dataset can be loaded from the PyTorch dataloader. You may refer to [classification_test.ipynb](classification/classification_train.ipynb) or [PyTorch CIFAR100 Documentation](https://pytorch.org/vision/main/generated/torchvision.datasets.CIFAR100.html).
 
 ### COCO2017
+To download the COCO 2017 dataset, run this command:
 
+```download
+wget http://images.cocodataset.org/zips/train2017.zip
+wget http://images.cocodataset.org/zips/val2017.zip
+wget http://images.cocodataset.org/annotations/annotations_trainval2017.zip
+```
+
+Here is how the dataset should be structured:
+```
+.
+├── COCO2017
+│   ├── annotations
+|   |   |── instances_train2017.json
+|   |   |── instances_val2017.json
+│   ├── images
+|   |   |── train2017
+|   |   |── val2017
+└──
+```
 
 ### ADE20k
 The structure of the dataset has been changed to fit into the dataloader, please download from my google drive through this link:
