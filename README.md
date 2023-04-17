@@ -53,7 +53,7 @@ This repository is the implementation of [Pyramid Vision Transformer: A Versatil
 The CIFAR100 dataset can be loaded from the PyTorch dataloader. You may refer to [classification_test.ipynb](classification/classification_train.ipynb) or [PyTorch CIFAR100 Documentation](https://pytorch.org/vision/main/generated/torchvision.datasets.CIFAR100.html).
 
 ### COCO2017
-To download the COCO 2017 dataset, run this command:
+To download the [COCO 2017 dataset](https://cocodataset.org/#download), run the following commands:
 
 ```download
 wget http://images.cocodataset.org/zips/train2017.zip
@@ -86,7 +86,7 @@ To train the classification model, run [classification_train.ipynb](classificati
 To train the detection model, run this command:
 
 ```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+python .\detection\train.py --dataset coco --coco_path <path_to_coco>
 ```
 
 To train the segmentation model, run the [segmentation/training.py](segmentation/training.py)
