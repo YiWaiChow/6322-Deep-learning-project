@@ -136,7 +136,7 @@ You can download the pretrained models/weights here:
   trained on COCO2017 using AdamW with parameters lr=1e-4.
   
 - segmentation model: https://drive.google.com/file/d/1gB889CepIlE-Q_bOvZCRqAVFV6V4SbXQ/view?usp=sharing <br>
-  trained on ADE20K using parameters AdamW with parameters lr=0.0001, weight_decay=0.001. 
+  trained on ADE20K using AdamW with parameters lr=0.0001, weight_decay=0.001. 
 
 ## Results
 
