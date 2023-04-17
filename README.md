@@ -144,13 +144,13 @@ Our model achieves the following performance on :
 
 ### Image Classification on CIFAR100
 
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| PVT_classification |     85%         |      95%       |
-| PVT_classification |     85%         |      95%       |
-| PVT_classification |     85%         |      95%       |
-| PVT_classification |     85%         |      95%       |
-| PVT_classification (Ours) |     85%         |      95%       |
+| Model name         | Top 1 Error  |
+| ------------------ |---------------- |
+| PVT-Tiny |     24.9%         |
+| PVT-Small |     20.2%         |
+| PVT-Medium |     18.8%         |
+| PVT-Large |     18.3%         |
+| PVT_classification (Ours) |      68.38%       |
 
 ### Object Detection on COCO2017
 
