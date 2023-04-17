@@ -85,6 +85,32 @@ The structure of the dataset has been changed to fit into the dataloader, please
 
 https://drive.google.com/file/d/1kQZGjiKCMdv2SpYVDftdez0gSRPDEX4H/view?usp=sharing
 
+Here is how the dataset should be structured:
+```
+.
+├── ADE20k
+|   ├── metadata
+│   ├── images
+|   |   |── train
+|   |   |   |── 0.jpg
+|   |   |   |── 1.jpg
+|   |   |   |── ...
+|   |   |── val
+|   |   |   |── 2.jpg
+|   |   |   |── 3.jpg
+|   |   |   |── ...
+│   ├── annotation 
+|   |   |── train
+|   |   |   |── 0.jpg
+|   |   |   |── 1.jpg
+|   |   |   |── ...
+|   |   |── val
+|   |   |   |── 2.jpg
+|   |   |   |── 3.jpg
+|   |   |   |── ...
+└──
+```
+
 ## Training
 
 ### Image Classification on CIFAR100
