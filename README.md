@@ -8,20 +8,42 @@ This repository is the implementation of [Pyramid Vision Transformer: A Versatil
 ```
 .
 ├── README.md
-├── classification_train.ipynb
-├── detection_train.ipynb
+|
+├── classification
+│   ├── classification_test.ipynb
+│   ├── classification_train.ipynb
+|
+├── detection
+│   ├── retinanet
+|   |   |── __init__.py
+|   |   |── anchors.py
+|   |   |── coco_eval.py
+|   |   |── dataloader.py
+|   |   |── losses.py
+|   |   |── model.py
+|   |   |── oid_dataset.py
+|   |   |── pvt.py
+|   |   |── utils.py
+│   ├── coco_validation.py
+│   ├── train.py
+|
 ├── segmentation
-│   ├──dataset.py
-│   ├──model.py
-│   ├──segmentation_model.py
-│   ├──training.py
-│   ├──test.py
-│   ├──util.py
+│   ├── dataset.py
+│   ├── model.py
+│   ├── segmentation_model.py
+│   ├── training.py
+│   ├── test.py
+│   ├── util.py
+|
 ├── ckpt_cifar100
 │   ├── cifar100_new_params.pth
 │   ├── cifar100_og_params.pth
+|
 ├── ckpt_coco2017
+│   ├── coco_retinanet.pt
+|
 ├── ckpt_ade20k
+|
 └── model.py
 ```
 
