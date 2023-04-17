@@ -101,7 +101,7 @@ To evaluate the classification model on CIFAR100, run [classification_test.ipynb
 To evaluate the detection model on COCO2017, run this command:
 
 ```eval
-python eval.py --input-data <path_to_data> --alpha 10 --beta 20
+python .\detection\coco_validation.py --coco_path <path_to_coco> --model_path .\ckpt_coco17\coco_retinanet.pt
 ```
 
 To evaluate the segmentation model on ADE20K, call the test function in segmentation/test.py
