@@ -188,7 +188,7 @@ Our model achieves the following performance on :
 | PVT-Large             |     42.6%         |      63.7%       |      45.4%       |      25.8%       |      46%         |      58.4%       |
 | PVT_detection (Ours)  |     2.5%          |      5.3%        |      2%          |      0.8%        |      2.5%        |      4.3%        |
 
-### Semantic Segmentation on ADE20K
+### Semantic Segmentation with FPN on ADE20K
 
 Tested on 2000 image:
 
