@@ -89,7 +89,7 @@ To train the detection model, run this command:
 python .\detection\train.py --dataset coco --coco_path <path_to_coco>
 ```
 
-To train the segmentation model, run the [segmentation/training.py](segmentation/training.py)
+To train the segmentation model, run the segmentation/training.py
 
 The dataset is assumed to be located a folder 1 layer outside the project root directory
 "..\\ADEChallengeData2016"
