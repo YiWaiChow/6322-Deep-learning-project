@@ -7,6 +7,9 @@ import torch
 from collections import OrderedDict
 import glob
 
+# the following codes are modifiy from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation
+# using their implementation of FPN model, as this is not the main contribution of the PvT paper
+
 
 class SegmentationLosses(object):
     def __init__(self, weight=None, size_average=True, batch_average=True, ignore_index=255, cuda=False):

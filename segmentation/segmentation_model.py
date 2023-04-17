@@ -1,14 +1,14 @@
-# taken from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation by Andy-zhujunwen
 
-'''FPN in PyTorch.
-See the paper "Feature Pyramid Networks for Object Detection" for more details.
-'''
 import sys
 import cv2
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
 from model import segmentation_pvt
+
+
+# the following codes are modifiy from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation
+# using their implementation of FPN model, as this is not the main contribution of the PvT paper
 
 
 class Bottleneck(nn.Module):

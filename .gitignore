@@ -17,3 +17,9 @@ epoch 0/model_best.pth.tar
 segementic_work_dir/experiment_0/checkpoint.pth.tar
 epoch 3/checkpoint.pth.tar
 segementic_work_dir/model_best.pth.tar
+epoch 3/ade20k_checkpoint.pth.tar
+segementic_work_dir/experiment_7/checkpoint.pth.tar
+epoch_3/ade20k_checkpoint.pth.tar
+segmentation_runs/validation_epoch_4/events.out.tfevents.1681666471.DESKTOP-526RQHO.4956.0
+segmentation_runs/validation_epoch_5/events.out.tfevents.1681666963.DESKTOP-526RQHO.4956.1
+segmentation_runs/validation_epoch_6/events.out.tfevents.1681667452.DESKTOP-526RQHO.4956.2

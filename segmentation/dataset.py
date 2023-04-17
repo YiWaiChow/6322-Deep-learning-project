@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 
 from PIL import Image, ImageOps, ImageFilter
 
+# the following codes are modifiy from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation
+# using their implementation of FPN model, as this is not the main contribution of the PvT paper
+
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
