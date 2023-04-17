@@ -152,11 +152,15 @@ Our model achieves the following performance on :
 | PVT-Large |     18.3%         |
 | PVT_classification (Ours) |      68.38%       |
 
-### Object Detection on COCO2017
+### Object Detection with RetinaNet on COCO2017
 
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| PVT_detection      |     85%         |      95%       |
+| Backbone         | AP  | AP<sub>50</sub> | AP<sub>75</sub> | AP<sub>S</sub> | AP<sub>M</sub> | AP<sub>L</sub> |
+| ------------------ |---------------- | -------------- |---------------- | -------------- | -------------- | -------------- |
+| PVT-Tiny      |     36.7%         |      56.9%       |      38.9%       |      22.6%       |      38.8%       |      50%       |
+| PVT-Small      |     40.4%         |      61.3%       |      43%       |      25.0%       |      42.9%       |      55.7%       |
+| PVT-Medium      |     41.9%         |      63.1%       |      44.3%       |      25.0%       |      44.9%       |      57.6%       |
+| PVT-Large      |     42.6%         |      63.7%       |      45.4%       |      25.8%       |      46%       |      58.4%       |
+| PVT_detection (Ours)      |     2.5%         |      5.3%       |      2%       |      0.8%       |      2.5%       |      4.3%       |
 
 ### Semantic Segmentation on ADE20K
 
