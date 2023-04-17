@@ -26,7 +26,7 @@ def main(args=None):
                               transform=transforms.Compose([Normalizer(), Resizer()]))
 
     # Create the model
-    retinanet = model.resnet50(num_classes=dataset_val.num_classes(), pretrained=True)
+    retinanet = model.ResNet(dataset_val.num_classes())
 
     use_gpu = True
 
