@@ -70,7 +70,13 @@ Here is how the dataset should be structured:
 |   |   |── instances_val2017.json
 │   ├── images
 |   |   |── train2017
+|   |   |   |── 0.jpg
+|   |   |   |── 1.jpg
+|   |   |   |── ...
 |   |   |── val2017
+|   |   |   |── 2.jpg
+|   |   |   |── 3.jpg
+|   |   |   |── ...
 └──
 ```
 
