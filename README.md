@@ -47,16 +47,10 @@ This repository is the implementation of [Pyramid Vision Transformer: A Versatil
 └── model.py
 ```
 
-## Requirements
-
-To install requirements:
-
-```setup
-pip install -r requirements.txt
-```
 ## Datasets
 
-### CIFAR10
+### CIFAR100
+The CIFAR100 dataset can be loaded from the PyTorch dataloader. You may refer to [classification_test.ipynb](classification/classification_train.ipynb)
 
 ### COCO2017
 
