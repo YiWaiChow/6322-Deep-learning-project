@@ -222,7 +222,7 @@ class ResNet(nn.Module):
 
         backbone = classification_pvt(img_batch.shape[1], img_batch.shape[2], img_batch.shape[3], img_batch.shape[0], 100).to(torch.device('cuda:0'))
 
-        backbone.load_state_dict(torch.load('retinanet\cifar100_new_params.pth'))
+        backbone.load_state_dict(torch.load('..\..\ckpt_cifar100\cifar100_new_params.pth'))
 
         features = self.fpn(backbone(img_batch))
 
