@@ -47,6 +47,12 @@ from util import SegmentationLosses
 from segmentation_model import Segmentic_Pvt
 from torch.utils.tensorboard import SummaryWriter
 
+# the following codes are modifiy from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation
+# using their implementation of FPN model, as this is not the main contribution of the PvT paper
+
+# decode_seg_map and decode_seg_map_sequence methods are modify based on this repo https://github.com/jfzhang95/pytorch-deeplab-xception/blob/master/dataloaders/utils.py
+# as this is not the main contribution of the PvT paper
+
 
 def decode_seg_map_sequence(label_masks):
     rgb_masks = []

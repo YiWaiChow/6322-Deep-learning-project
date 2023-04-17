@@ -22,15 +22,17 @@ import torchvision.transforms as transforms
 from torch.utils.data.sampler import Sampler
 
 from dataset import make_data_loader
-from segmentation import Segmentic_Pvt
 
 
 from util import Evaluator
 from util import Saver
 from util import SegmentationLosses
 
-from segmentation import Segmentic_Pvt
+from segmentation_model import Segmentic_Pvt
 from torch.utils.tensorboard import SummaryWriter
+
+# the following codes are modifiy from https://github.com/Andy-zhujunwen/FPN-Semantic-segmentation
+# using their implementation of FPN model, as this is not the main contribution of the PvT paper
 
 
 def adjust_learning_rate(optimizer, decay=0.1):
@@ -211,15 +213,22 @@ class Trainer(object):
 
 def main():
 
-    trainer = Trainer(0, 10, True, load_check_point=False,
-                      check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.0001)
+    # trainer = Trainer(0, 10, True, load_check_point=False,
+    #                   check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.0001)
 
-    eval_interval = 2
+    # eval_interval = 2
+    # for epoch in range(trainer.start_epoch, trainer.end_epoch):
+    #     trainer.training(epoch)
+    #     if epoch % eval_interval == 0:
+    #         print("validating at epoch {}".format(epoch))
+    #         trainer.validation(epoch)
+
+    trainer = Trainer(4, 10, True, load_check_point=True,
+                      check_point_path=".\epoch_3\\ade20k_checkpoint.pth.tar", lr=0.0001)
+
     for epoch in range(trainer.start_epoch, trainer.end_epoch):
-        trainer.training(epoch)
-        if epoch % eval_interval == 0:
-            print("validating at epoch {}".format(epoch))
-            trainer.validation(epoch)
+        print("validating at epoch {}".format(epoch))
+        trainer.validation(epoch)
 
 
 if __name__ == '__main__':
