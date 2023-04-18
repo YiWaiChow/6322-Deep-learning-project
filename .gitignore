@@ -26,3 +26,5 @@ segmentation_runs/validation_epoch_6/events.out.tfevents.1681667452.DESKTOP-526R
 segmentation/training.py
 segmentation_runs/training_epoch_0/events.out.tfevents.1681827587.DESKTOP-526RQHO.21568.0
 segmentation_runs/validation_epoch_4/events.out.tfevents.1681827556.DESKTOP-526RQHO.3588.0
+segmentation_runs/training_epoch_0/events.out.tfevents.1681828250.DESKTOP-526RQHO.27128.0
+segmentation_runs/training_epoch_0/events.out.tfevents.1681828276.DESKTOP-526RQHO.1708.0

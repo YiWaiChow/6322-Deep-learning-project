@@ -211,9 +211,9 @@ class Trainer(object):
             }, is_best)
 
 
-def main(check_point_path):
+def main(check_point_path, load_check_point):
 
-    trainer = Trainer(0, 10, True, load_check_point=False,
+    trainer = Trainer(0, 10, True, load_check_point=load_check_point,
                       check_point_path=check_point_path, lr=0.0001)
 
     eval_interval = 2
@@ -225,4 +225,4 @@ def main(check_point_path):
 
 
 if __name__ == '__main__':
-    main("segementic_work_dir\experiment_10\checkpoint.pth.tar")
+    main("segementic_work_dir\model_best.pth.tar", True)
