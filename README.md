@@ -127,7 +127,7 @@ python .\detection\train.py --dataset coco --coco_path <path_to_coco>
 
 ### Semantic Segmentation on ADE20K
 
-To train the segmentation model, run the segmentation/training.py
+To train the segmentation model, run the segmentation/training.py with the main(checkpoint_path) function
 
 The dataset is assumed to be located a folder 1 layer outside the project root directory
 "..\\ADEChallengeData2016"
@@ -148,7 +148,7 @@ python .\detection\coco_validation.py --coco_path <path_to_coco> --model_path .\
 
 ### Semantic Segmentation on ADE20K
 
-To evaluate the segmentation model on ADE20K, call the test() function in segmentation/test.py
+To evaluate the segmentation model on ADE20K, call the test(checkpoint_path) function in segmentation/test.py
 
 
 ## Pre-trained Models
