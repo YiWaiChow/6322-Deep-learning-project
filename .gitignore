@@ -23,3 +23,6 @@ epoch_3/ade20k_checkpoint.pth.tar
 segmentation_runs/validation_epoch_4/events.out.tfevents.1681666471.DESKTOP-526RQHO.4956.0
 segmentation_runs/validation_epoch_5/events.out.tfevents.1681666963.DESKTOP-526RQHO.4956.1
 segmentation_runs/validation_epoch_6/events.out.tfevents.1681667452.DESKTOP-526RQHO.4956.2
+segmentation/training.py
+segmentation_runs/training_epoch_0/events.out.tfevents.1681827587.DESKTOP-526RQHO.21568.0
+segmentation_runs/validation_epoch_4/events.out.tfevents.1681827556.DESKTOP-526RQHO.3588.0

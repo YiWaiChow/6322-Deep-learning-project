@@ -211,25 +211,18 @@ class Trainer(object):
             }, is_best)
 
 
-def main():
+def main(check_point_path):
 
-    # trainer = Trainer(0, 10, True, load_check_point=False,
-    #                   check_point_path="segementic_work_dir\experiment_10\checkpoint.pth.tar", lr=0.0001)
+    trainer = Trainer(0, 10, True, load_check_point=False,
+                      check_point_path=check_point_path, lr=0.0001)
 
-    # eval_interval = 2
-    # for epoch in range(trainer.start_epoch, trainer.end_epoch):
-    #     trainer.training(epoch)
-    #     if epoch % eval_interval == 0:
-    #         print("validating at epoch {}".format(epoch))
-    #         trainer.validation(epoch)
-
-    trainer = Trainer(4, 10, True, load_check_point=True,
-                      check_point_path=".\epoch_3\\ade20k_checkpoint.pth.tar", lr=0.0001)
-
+    eval_interval = 2
     for epoch in range(trainer.start_epoch, trainer.end_epoch):
-        print("validating at epoch {}".format(epoch))
-        trainer.validation(epoch)
+        trainer.training(epoch)
+        if epoch % eval_interval == 0:
+            print("validating at epoch {}".format(epoch))
+            trainer.validation(epoch)
 
 
 if __name__ == '__main__':
-    main()
+    main("segementic_work_dir\experiment_10\checkpoint.pth.tar")
